@@ -1,0 +1,13 @@
+langchain
+langchain-community
+numpy
+pandas
+ipykernel
+transformers
+pypdf
+re
+sentence_transformers
+faiss-cpu
+dotenv
+openai
+pdfplumber
