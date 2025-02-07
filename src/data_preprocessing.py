@@ -2,9 +2,9 @@ import re
 from src.data_loader import PDFDocumentHandler
 from src.config import embedding_model_name, VectorStore_save_directory
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
 from langchain.docstore.document import Document
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
 class TextPreprocessor:
@@ -37,9 +37,7 @@ class TextPreprocessor:
 
         return text
 
-pre_proces = TextPreprocessor()
-for doc in PDFDocumentHandler.get_documents():
-    doc.page_content = pre_proces.preprocess_text(doc.page_content)
+
 
 
 """

@@ -1,7 +1,11 @@
-
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 class LLMSetup:
     def __init__(self, model_name="gpt-3.5-turbo", temperature=0):
@@ -14,7 +18,11 @@ class LLMSetup:
         """
         self.model_name = model_name
         self.temperature = temperature
-        self.llm = ChatOpenAI(temperature=self.temperature, model_name=self.model_name)
+        self.llm = ChatOpenAI(
+            temperature=self.temperature,
+            model_name=self.model_name,
+            openai_api_key=os.getenv("OPENAI_API_KEY")  # Load API key from .env
+        )
 
     def get_llm(self):
         """
@@ -24,9 +32,6 @@ class LLMSetup:
             ChatOpenAI: The configured chat model.
         """
         return self.llm
-    
-
-
 
 
 class Chatbot:
@@ -40,7 +45,7 @@ class Chatbot:
         """
         self.retriever = retriever
         self.llm = llm
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)  # Updated initialization
         self.conversation_chain = self._create_conversation_chain()
 
     def _create_conversation_chain(self):
@@ -65,6 +70,6 @@ class Chatbot:
             user_input = input("User: ")
             if user_input.lower() == "exit":
                 break
-            # Pass the user query to the conversation chain
-            result = self.conversation_chain({"question": user_input})
+            # Pass only the question to the conversation chain
+            result = self.conversation_chain.invoke({"question": user_input})
             print("Chatbot:", result["answer"])
