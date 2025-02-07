@@ -5,7 +5,6 @@ pandas
 ipykernel
 transformers
 pypdf
-re
 sentence_transformers
 faiss-cpu
 dotenv
@@ -13,3 +12,4 @@ openai
 pdfplumber
 langchain_huggingface
 langchain-openai
+-e .
