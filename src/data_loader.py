@@ -5,7 +5,7 @@ import copy
 
 
 class PDFDocumentHandler:
-    def __init__(self, pdf_path):
+    def __init__(self, pdf_path=path):
         """
         Initialize the PDFDocumentHandler with the path to the PDF file.
 
