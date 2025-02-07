@@ -42,19 +42,18 @@ class PDFDocumentHandler:
         """
         return self.documents
 
-# Example usage:
-pdf_path = "example.pdf"  # Replace with your actual path
+"""# Example usage:
 pdf_handler = PDFDocumentHandler(pdf_path)
 pdf_handler.load_documents()
 
 original_docs = pdf_handler.get_original_documents()
 copied_docs = pdf_handler.get_documents()
 
-
-
+"""
+"""
 
 pdf_path = path
 loader = PDFPlumberLoader(pdf_path)
 Original_documents = loader.load()
 
-documents = copy.deepcopy(Original_documents)
+documents = copy.deepcopy(Original_documents)"""
