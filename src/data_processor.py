@@ -1,10 +1,49 @@
 import re
-from src.data_loader import PDFDocumentHandler
-from src.config import embedding_model_name, VectorStore_save_directory
+import copy
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+from src.config import path, embedding_model_name, VectorStore_save_directory
+
+class PDFDocumentHandler:
+    def __init__(self, pdf_path=path):
+        """
+        Initialize the PDFDocumentHandler with the path to the PDF file.
+
+        Args:
+            pdf_path (str): The path to the PDF file.
+        """
+        self.pdf_path = pdf_path
+        self.original_documents = None
+        self.documents = None
+
+    def load_documents(self):
+        """
+        Load the documents from the PDF file using PDFPlumberLoader.
+        """
+        loader = PDFPlumberLoader(self.pdf_path)
+        self.original_documents = loader.load()
+        self.documents = copy.deepcopy(self.original_documents)
+
+    def get_original_documents(self):
+        """
+        Get the original documents loaded from the PDF.
+
+        Returns:
+            list: A list of Document objects representing the original documents.
+        """
+        return self.original_documents
+
+    def get_documents(self):
+        """
+        Get the copied documents.
+
+        Returns:
+            list: A list of Document objects representing the copied documents.
+        """
+        return self.documents
 
 
 class TextPreprocessor:
@@ -38,17 +77,6 @@ class TextPreprocessor:
         return text
 
 
-
-
-"""
-# Example usage:
-preprocessor = TextPreprocessor()
-text = "Page 1 NATIONAL CANCER PLAN | 1 This is a sample text. 1 of 10"
-cleaned_text = preprocessor.preprocess_text(text)
-print(cleaned_text)  # Output: "This is a sample text."
-"""
-
-#Chunking the preprocessed document
 class DocumentChunker:
     def __init__(self, chunk_size=1000, chunk_overlap=200, separators=["\n\n", "\n"]):
         """
@@ -80,7 +108,6 @@ class DocumentChunker:
             list: A list of chunked documents.
         """
         return self.splitter.split_documents(documents)
-    
 
 
 class VectorStoreCreator:
@@ -115,3 +142,42 @@ class VectorStoreCreator:
             save_directory (str): The directory where the vector store will be saved.
         """
         vector_store.save_local(save_directory)
+
+
+class DataProcessor:
+    def __init__(self):
+        """
+        Initialize the DataProcessor with the necessary components.
+        """
+        self.pdf_handler = PDFDocumentHandler()
+        self.preprocessor = TextPreprocessor()
+        self.chunker = DocumentChunker()
+        self.vector_store_creator = VectorStoreCreator()
+
+    def process_data(self):
+        """
+        Process the data by loading, preprocessing, chunking, and creating a vector store.
+        """
+        # Step 1: Load the PDF document
+        self.pdf_handler.load_documents()
+        documents = self.pdf_handler.get_documents()
+
+        # Step 2: Preprocess the documents
+        for doc in documents:
+            doc.page_content = self.preprocessor.preprocess_text(doc.page_content)
+
+        # Step 3: Chunk the documents
+        chunks = self.chunker.chunk_documents(documents)
+
+        # Step 4: Create and save the vector store
+        vector_store = self.vector_store_creator.create_vector_store(chunks)
+        self.vector_store_creator.save_vector_store(vector_store, VectorStore_save_directory)
+
+        print("Data processing completed. Vector store saved.")
+
+
+if __name__ == "__main__":
+    #this file can read the documents, do preprocessing, creats chunks and creats vectors and save them in local
+    #This fill is need to be run when you have new docs or want to overrite the existing vectorstore(database)
+    processor = DataProcessor()
+    processor.process_data()

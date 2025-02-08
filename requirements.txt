@@ -7,9 +7,8 @@ transformers
 pypdf
 sentence_transformers
 faiss-cpu
-dotenv
+python-dotenv
 openai
 pdfplumber
 langchain_huggingface
 langchain-openai
--e .

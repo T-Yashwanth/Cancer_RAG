@@ -2,13 +2,14 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from dotenv import load_dotenv
+from src.config import llm_model
 import os
 
 # Load environment variables from .env file
 load_dotenv()
 
 class LLMSetup:
-    def __init__(self, model_name="gpt-3.5-turbo", temperature=0):
+    def __init__(self, model_name=llm_model, temperature=0):
         """
         Initialize the LLM setup with a specific model and temperature.
 
@@ -45,7 +46,7 @@ class Chatbot:
         """
         self.retriever = retriever
         self.llm = llm
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)  # Updated initialization
+        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)  
         self.conversation_chain = self._create_conversation_chain()
 
     def _create_conversation_chain(self):
