@@ -2,13 +2,15 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from dotenv import load_dotenv
+from src.config import llm_model
 import os
+from src import logger  # Import the logger
 
 # Load environment variables from .env file
 load_dotenv()
 
 class LLMSetup:
-    def __init__(self, model_name="gpt-3.5-turbo", temperature=0):
+    def __init__(self, model_name=llm_model, temperature=0):
         """
         Initialize the LLM setup with a specific model and temperature.
 
@@ -16,13 +18,19 @@ class LLMSetup:
             model_name (str): The name of the chat model (e.g., "gpt-3.5-turbo" or "gpt-4").
             temperature (float): The temperature parameter for the chat model.
         """
-        self.model_name = model_name
-        self.temperature = temperature
-        self.llm = ChatOpenAI(
-            temperature=self.temperature,
-            model_name=self.model_name,
-            openai_api_key=os.getenv("OPENAI_API_KEY")  # Load API key from .env
-        )
+        try:
+            logger.info(f"Initializing LLM with model: {model_name} and temperature: {temperature}.")
+            self.model_name = model_name
+            self.temperature = temperature
+            self.llm = ChatOpenAI(
+                temperature=self.temperature,
+                model_name=self.model_name,
+                openai_api_key=os.getenv("OPENAI_API_KEY")  # Load API key from .env
+            )
+            logger.info("LLM initialized successfully.")
+        except Exception as e:
+            logger.error(f"Failed to initialize LLM: {e}", exc_info=True)
+            raise
 
     def get_llm(self):
         """
@@ -43,10 +51,16 @@ class Chatbot:
             retriever: The retriever object (e.g., FAISS vector store retriever).
             llm: The initialized language model.
         """
-        self.retriever = retriever
-        self.llm = llm
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)  # Updated initialization
-        self.conversation_chain = self._create_conversation_chain()
+        try:
+            logger.info("Initializing Chatbot.")
+            self.retriever = retriever
+            self.llm = llm
+            self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+            self.conversation_chain = self._create_conversation_chain()
+            logger.info("Chatbot initialized successfully.")
+        except Exception as e:
+            logger.error(f"Failed to initialize Chatbot: {e}", exc_info=True)
+            raise
 
     def _create_conversation_chain(self):
         """
@@ -55,21 +69,34 @@ class Chatbot:
         Returns:
             ConversationalRetrievalChain: The configured conversational retrieval chain.
         """
-        return ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            retriever=self.retriever,
-            memory=self.memory
-        )
+        try:
+            logger.info("Creating conversational retrieval chain.")
+            return ConversationalRetrievalChain.from_llm(
+                llm=self.llm,
+                retriever=self.retriever,
+                memory=self.memory
+            )
+        except Exception as e:
+            logger.error(f"Failed to create conversation chain: {e}", exc_info=True)
+            raise
 
     def chat(self):
         """
         Start an interactive chat loop with the chatbot.
         """
-        print("Chatbot is ready! Type 'exit' to quit.")
-        while True:
-            user_input = input("User: ")
-            if user_input.lower() == "exit":
-                break
-            # Pass only the question to the conversation chain
-            result = self.conversation_chain.invoke({"question": user_input})
-            print("Chatbot:", result["answer"])
+        try:
+            logger.info("Starting chat loop.")
+            print("Chatbot is ready! Type 'exit' to quit.")
+            while True:
+                user_input = input("User: ")
+                if user_input.lower() == "exit":
+                    logger.info("Closing chat loop.")
+                    break
+                logger.info(f"Processing user query: {user_input}.")
+                # Pass only the question to the conversation chain
+                result = self.conversation_chain.invoke({"question": user_input})
+                logger.info(f"Generated Responce: {result}.")
+                print("Chatbot:", result["answer"])
+        except Exception as e:
+            logger.error(f"An error occurred during chat: {e}", exc_info=True)
+            raise
