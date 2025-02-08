@@ -6,6 +6,7 @@ from langchain.docstore.document import Document
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from src.config import path, embedding_model_name, VectorStore_save_directory
+from src import logger  # Import the logger
 
 class PDFDocumentHandler:
     def __init__(self, pdf_path=path):
@@ -23,9 +24,15 @@ class PDFDocumentHandler:
         """
         Load the documents from the PDF file using PDFPlumberLoader.
         """
-        loader = PDFPlumberLoader(self.pdf_path)
-        self.original_documents = loader.load()
-        self.documents = copy.deepcopy(self.original_documents)
+        try:
+            logger.info(f"Loading documents from {self.pdf_path}.")
+            loader = PDFPlumberLoader(self.pdf_path)
+            self.original_documents = loader.load()
+            self.documents = copy.deepcopy(self.original_documents)
+            logger.info("Documents loaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to load documents: {e}", exc_info=True)
+            raise
 
     def get_original_documents(self):
         """
@@ -48,10 +55,13 @@ class PDFDocumentHandler:
 
 class TextPreprocessor:
     def __init__(self):
+        """
+        Initialize the TextPreprocessor with patterns for preprocessing.
+        """
         # Define patterns for preprocessing
-        self.page_number_pattern = r'Page \d+'  #Page 1
-        self.page_range_pattern = r'\d+ of \d+'  #Page 1 of 10
-        self.header_footer_pattern = r'NATIONAL CANCER PLAN \| \d'    #NATIONAL CANCER PLAN | 1
+        self.page_number_pattern = r'Page \d+'  # Page 1
+        self.page_range_pattern = r'\d+ of \d+'  # Page 1 of 10
+        self.header_footer_pattern = r'NATIONAL CANCER PLAN \| \d'  # NATIONAL CANCER PLAN | 1
         self.whitespace_pattern = r'\s+'
 
     def preprocess_text(self, text):
@@ -64,17 +74,20 @@ class TextPreprocessor:
         Returns:
             str: The preprocessed text.
         """
-        # Remove page numbers
-        text = re.sub(self.page_number_pattern, '', text)
-        text = re.sub(self.page_range_pattern, '', text)
+        try:
+            # Remove page numbers
+            text = re.sub(self.page_number_pattern, '', text)
+            text = re.sub(self.page_range_pattern, '', text)
 
-        # Remove repetitive headers/footers
-        text = re.sub(self.header_footer_pattern, '', text)
+            # Remove repetitive headers/footers
+            text = re.sub(self.header_footer_pattern, '', text)
 
-        # Remove extra whitespace and newlines
-        text = re.sub(self.whitespace_pattern, ' ', text).strip()
-
-        return text
+            # Remove extra whitespace and newlines
+            text = re.sub(self.whitespace_pattern, ' ', text).strip()
+            return text
+        except Exception as e:
+            logger.error(f"Failed to preprocess text: {e}", exc_info=True)
+            raise
 
 
 class DocumentChunker:
@@ -107,7 +120,12 @@ class DocumentChunker:
         Returns:
             list: A list of chunked documents.
         """
-        return self.splitter.split_documents(documents)
+        try:
+            logger.info("Chunking documents.")
+            return self.splitter.split_documents(documents)
+        except Exception as e:
+            logger.error(f"Failed to chunk documents: {e}", exc_info=True)
+            raise
 
 
 class VectorStoreCreator:
@@ -131,7 +149,12 @@ class VectorStoreCreator:
         Returns:
             FAISS: A FAISS vector store containing the indexed chunks.
         """
-        return FAISS.from_documents(chunks, self.embedding_model)
+        try:
+            logger.info("Creating vector store.")
+            return FAISS.from_documents(chunks, self.embedding_model)
+        except Exception as e:
+            logger.error(f"Failed to create vector store: {e}", exc_info=True)
+            raise
 
     def save_vector_store(self, vector_store, save_directory=VectorStore_save_directory):
         """
@@ -141,7 +164,13 @@ class VectorStoreCreator:
             vector_store (FAISS): The FAISS vector store to save.
             save_directory (str): The directory where the vector store will be saved.
         """
-        vector_store.save_local(save_directory)
+        try:
+            logger.info(f"Saving vector store to {save_directory}.")
+            vector_store.save_local(save_directory)
+            logger.info("Vector store saved successfully.")
+        except Exception as e:
+            logger.error(f"Failed to save vector store: {e}", exc_info=True)
+            raise
 
 
 class DataProcessor:
@@ -158,26 +187,35 @@ class DataProcessor:
         """
         Process the data by loading, preprocessing, chunking, and creating a vector store.
         """
-        # Step 1: Load the PDF document
-        self.pdf_handler.load_documents()
-        documents = self.pdf_handler.get_documents()
+        try:
+            logger.info("Starting data processing.")
 
-        # Step 2: Preprocess the documents
-        for doc in documents:
-            doc.page_content = self.preprocessor.preprocess_text(doc.page_content)
+            # Step 1: Load the PDF document
+            self.pdf_handler.load_documents()
+            documents = self.pdf_handler.get_documents()
 
-        # Step 3: Chunk the documents
-        chunks = self.chunker.chunk_documents(documents)
+            # Step 2: Preprocess the documents
+            for doc in documents:
+                doc.page_content = self.preprocessor.preprocess_text(doc.page_content)
 
-        # Step 4: Create and save the vector store
-        vector_store = self.vector_store_creator.create_vector_store(chunks)
-        self.vector_store_creator.save_vector_store(vector_store, VectorStore_save_directory)
+            # Step 3: Chunk the documents
+            chunks = self.chunker.chunk_documents(documents)
 
-        print("Data processing completed. Vector store saved.")
+            # Step 4: Create and save the vector store
+            vector_store = self.vector_store_creator.create_vector_store(chunks)
+            self.vector_store_creator.save_vector_store(vector_store, VectorStore_save_directory)
+
+            logger.info("Data processing completed. Vector store saved.")
+        except Exception as e:
+            logger.error(f"An error occurred during data processing: {e}", exc_info=True)
+            raise
 
 
 if __name__ == "__main__":
-    #this file can read the documents, do preprocessing, creats chunks and creats vectors and save them in local
-    #This fill is need to be run when you have new docs or want to overrite the existing vectorstore(database)
-    processor = DataProcessor()
-    processor.process_data()
+    try:
+        logger.info("Running data_processor.py as a standalone script.")
+        processor = DataProcessor()
+        processor.process_data()
+    except Exception as e:
+        logger.error(f"An error occurred in data_processor.py: {e}", exc_info=True)
+        raise
