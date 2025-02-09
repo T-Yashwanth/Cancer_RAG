@@ -1,11 +1,12 @@
 import os
 
-base_directory  = os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
+# Define the base directory as the project root.
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-path =  os.path.join(base_directory, "data", "national-cancer-plan-508.pdf")
+# Paths for data resources.
+PDF_PATH = os.path.join(BASE_DIR, "data", "national-cancer-plan-508.pdf")
+VECTORSTORE_SAVE_DIRECTORY = os.path.join(BASE_DIR, "data")
 
-embedding_model_name="all-MiniLM-L6-v2"
-
-VectorStore_save_directory = os.path.join(base_directory, "data")
-
-llm_model = "gpt-3.5-turbo"
+# Model configuration constants.
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
+LLM_MODEL = "gpt-3.5-turbo"

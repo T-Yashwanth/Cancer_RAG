@@ -1,111 +1,122 @@
+import os
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from dotenv import load_dotenv
-from src.config import llm_model
-import os
-from src import logger  # Import the logger
+from src.config import LLM_MODEL
+from src import logger
 
-# Load environment variables from .env file
+# Load environment variables from .env.
 load_dotenv()
 
+
 class LLMSetup:
-    def __init__(self, model_name=llm_model, temperature=0):
+    """
+    Sets up the language model with the specified configuration.
+    """
+
+    def __init__(self, model_name: str = LLM_MODEL, temperature: float = 0) -> None:
         """
-        Initialize the LLM setup with a specific model and temperature.
+        Initialize the language model with a given model name and temperature.
 
         Args:
-            model_name (str): The name of the chat model (e.g., "gpt-3.5-turbo" or "gpt-4").
-            temperature (float): The temperature parameter for the chat model.
+            model_name (str): The OpenAI model name.
+            temperature (float): Sampling temperature for response generation.
         """
         try:
-            logger.info(f"Initializing LLM with model: {model_name} and temperature: {temperature}.")
+            logger.info("Initializing LLM with model '%s' and temperature %s.", model_name, temperature)
             self.model_name = model_name
             self.temperature = temperature
             self.llm = ChatOpenAI(
                 temperature=self.temperature,
                 model_name=self.model_name,
-                openai_api_key=os.getenv("OPENAI_API_KEY")  # Load API key from .env
+                openai_api_key=os.getenv("OPENAI_API_KEY")
             )
             logger.info("LLM initialized successfully.")
-        except Exception as e:
-            logger.error(f"Failed to initialize LLM: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Failed to initialize LLM.")
             raise
 
-    def get_llm(self):
+    def get_llm(self) -> ChatOpenAI:
         """
-        Get the initialized LLM.
+        Retrieve the initialized language model.
 
         Returns:
-            ChatOpenAI: The configured chat model.
+            ChatOpenAI: The language model instance.
         """
         return self.llm
 
 
 class Chatbot:
-    def __init__(self, retriever, llm):
+    """
+    Chatbot that integrates a conversational retrieval chain to generate responses
+    based on retrieved documents and the user’s chat history.
+    """
+
+    def __init__(self, retriever, llm) -> None:
         """
-        Initialize the Chatbot with a retriever and LLM.
+        Initialize the chatbot with a document retriever interface and a language model.
 
         Args:
-            retriever: The retriever object (e.g., FAISS vector store retriever).
-            llm: The initialized language model.
+            retriever: An object providing document retrieval.
+            llm: An instance of the language model.
         """
         try:
-            logger.info("Initializing Chatbot.")
+            logger.info("Initializing Chatbot with provided retriever and LLM.")
             self.retriever = retriever
             self.llm = llm
-            self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key='answer')
+            self.memory = ConversationBufferMemory(
+                memory_key="chat_history",
+                return_messages=True,
+                output_key="answer"
+            )
             self.conversation_chain = self._create_conversation_chain()
             logger.info("Chatbot initialized successfully.")
-        except Exception as e:
-            logger.error(f"Failed to initialize Chatbot: {e}", exc_info=True)
+        except Exception:
+            logger.exception("Failed to initialize Chatbot.")
             raise
 
-    def _create_conversation_chain(self):
+    def _create_conversation_chain(self) -> ConversationalRetrievalChain:
         """
-        Create a conversational retrieval chain.
+        Create the conversational retrieval chain that ties together the language model,
+        retriever, and memory for an interactive session.
 
         Returns:
-            ConversationalRetrievalChain: The configured conversational retrieval chain.
+            ConversationalRetrievalChain: Configured conversational chain.
         """
         try:
             logger.info("Creating conversational retrieval chain.")
-            return ConversationalRetrievalChain.from_llm(
+            chain = ConversationalRetrievalChain.from_llm(
                 llm=self.llm,
                 retriever=self.retriever,
                 memory=self.memory,
                 return_source_documents=True,
                 verbose=True
             )
-        except Exception as e:
-            logger.error(f"Failed to create conversation chain: {e}", exc_info=True)
+            return chain
+        except Exception:
+            logger.exception("Failed to create conversational retrieval chain.")
             raise
 
-    def chat(self):
+    def chat(self) -> None:
         """
-        Start an interactive chat loop with the chatbot.
+        Start an interactive chatbot session.
+        Type 'exit' to end the conversation.
         """
         try:
-            logger.info("Starting chat loop.")
+            logger.info("Starting chatbot interaction loop.")
             print("Chatbot is ready! Type 'exit' to quit.")
             while True:
                 user_input = input("User: ")
                 if user_input.lower() == "exit":
-                    logger.info("Closing chat loop.")
+                    logger.info("Chatbot session terminated by user.")
                     break
-                logger.info(f"Processing user query: {user_input}.")
-                # Pass only the question to the conversation chain
+                logger.info("Processing user query: %s", user_input)
                 result = self.conversation_chain.invoke({"question": user_input})
-
-                # Log the top-k retrieved documents' content
-#                if "source_documents" in result:
-#                    logger.info("Retrieved source documents:")
-#                    for i, doc in enumerate(result["source_documents"], start=1):
-#                        logger.info(f"Document {i}: {doc.page_content}")
-
-                logger.info(f"Generated Responce: {result}.")
-                print("Chatbot:", result["answer"])
-        except Exception as e:
-            logger.error(f"An error occurred during chat: {e}", exc_info=True)
+                logger.info("response from chain includes history and retrived documents %s", result)
+                answer = result.get("answer")
+                logger.info("Generated response: %s", answer)
+                print("Chatbot:", answer)
+        except Exception:
+            logger.exception("An error occurred during the chatbot session.")
             raise

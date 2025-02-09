@@ -1,24 +1,22 @@
 import os
-import sys
 import logging
 from datetime import datetime
 
-# Define the logging format
-logging_str = "[%(asctime)s: %(levelname)s: %(module)s: %(message)s]"
+# Define a standard logging format.
+LOG_FORMAT = "[%(asctime)s - %(levelname)s - %(module)s - %(message)s]"
 
-# Create logs directory if it doesn't exist
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)
+# Set up the logs directory.
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
 
-# Create a unique log filename using the current date and time
+# Create a unique log file name based on the current timestamp.
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 log_filename = f"running_log_{timestamp}.log"
-log_filepath = os.path.join(log_dir, log_filename)
-
-# Configure the logging
+log_filepath = os.path.join(LOG_DIR, log_filename)
+# Configure logging to file.
 logging.basicConfig(
     level=logging.INFO,
-    format=logging_str,
+    format=LOG_FORMAT,
     handlers=[
         logging.FileHandler(log_filepath),
         # Uncomment the next line to also log to the console
@@ -26,5 +24,5 @@ logging.basicConfig(
     ]
 )
 
-# Create a logger
-logger = logging.getLogger("Cancer_Rag")
+# Create a project logger.
+logger = logging.getLogger("CancerRAG")
