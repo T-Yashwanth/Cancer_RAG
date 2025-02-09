@@ -1,45 +1,40 @@
 from src.data_processor import DataProcessor
-from src.retriver import VectorStoreRetriever
+from src.retriever import VectorStoreRetriever
 from src.generator import LLMSetup, Chatbot
-from src.config import VectorStore_save_directory
+from src.config import VECTORSTORE_SAVE_DIRECTORY
 from src import logger  # Import the logger
 
-def main():
+def main() -> None:
     """
-    Main function to initialize and run the chatbot pipeline.
-    Steps include data processing, loading the vector store, setting up the LLM, and starting the chatbot.
+    Execute the core pipeline:
+    1. (Optional) Reprocess data from the PDF.
+    2. Load the FAISS vector store.
+    3. Set up the language model.
+    4. Initiate the chatbot interactive session.
     """
     try:
-        logger.info("Starting the chatbot pipeline.")
+        logger.info("Starting the CancerRAG pipeline.")
 
-        # Step 1: Process the data (load, preprocess, chunk, and create vector store)
-        logger.info("Initializing DataProcessor.")
-        #processor = DataProcessor()
-        #processor.process_data()  # Uncomment to reprocess data if needed
+        # Step 1: Optionally (re)process the PDF data to update the vector store.
+        # Uncomment the following lines if data reprocessing is needed.
+        # logger.info("Processing PDF data to update vector store.")
+        # processor = DataProcessor()
+        # processor.process_data()
+        
+        # Step 2: Load the pre-built vector store from disk.
+        logger.info("Loading the vector store from disk.")
+        vector_retriever = VectorStoreRetriever()
+        vector_retriever.load_vector_store(VECTORSTORE_SAVE_DIRECTORY)
+        retriever_interface = vector_retriever.retrieve_documents()
 
-        # Step 2: Load the vector store
-        logger.info("Loading vector store.")
-        retriever = VectorStoreRetriever()
-        retriever.load_vector_store(VectorStore_save_directory)
-
-        # Step 3: Set up the LLM and chatbot
-        logger.info("Setting up LLM.")
+        # Step 3: Initialize the language model.
+        logger.info("Initializing the language model.")
         llm_setup = LLMSetup()
         llm = llm_setup.get_llm()
 
-        # Step 4: Start the chatbot
-        logger.info("Starting chatbot.")
-
-
-
-        test = retriever.retrieve_documents()
-        #docs_sim = test.get_relevant_documents("what is sai gender?")
-        #print("################",docs_sim,"##########")
-    
-
-
-
-        chatbot = Chatbot(retriever=test, llm=llm)
+        # Step 4: Start the interactive chatbot session.
+        logger.info("Starting chatbot session.")
+        chatbot = Chatbot(retriever=retriever_interface, llm=llm)
         chatbot.chat()
 
     except Exception as e:
