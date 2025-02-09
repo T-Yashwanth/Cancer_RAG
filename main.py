@@ -14,7 +14,7 @@ def main():
 
         # Step 1: Process the data (load, preprocess, chunk, and create vector store)
         logger.info("Initializing DataProcessor.")
-        processor = DataProcessor()
+        #processor = DataProcessor()
         #processor.process_data()  # Uncomment to reprocess data if needed
 
         # Step 2: Load the vector store
@@ -29,7 +29,17 @@ def main():
 
         # Step 4: Start the chatbot
         logger.info("Starting chatbot.")
-        chatbot = Chatbot(retriever=retriever.vector_store.as_retriever(), llm=llm)
+
+
+
+        test = retriever.retrieve_documents()
+        #docs_sim = test.get_relevant_documents("what is sai gender?")
+        #print("################",docs_sim,"##########")
+    
+
+
+
+        chatbot = Chatbot(retriever=test, llm=llm)
         chatbot.chat()
 
     except Exception as e:
