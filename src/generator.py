@@ -55,7 +55,7 @@ class Chatbot:
             logger.info("Initializing Chatbot.")
             self.retriever = retriever
             self.llm = llm
-            self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+            self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key='answer')
             self.conversation_chain = self._create_conversation_chain()
             logger.info("Chatbot initialized successfully.")
         except Exception as e:
@@ -74,7 +74,9 @@ class Chatbot:
             return ConversationalRetrievalChain.from_llm(
                 llm=self.llm,
                 retriever=self.retriever,
-                memory=self.memory
+                memory=self.memory,
+                return_source_documents=True,
+                verbose=True
             )
         except Exception as e:
             logger.error(f"Failed to create conversation chain: {e}", exc_info=True)
@@ -95,6 +97,13 @@ class Chatbot:
                 logger.info(f"Processing user query: {user_input}.")
                 # Pass only the question to the conversation chain
                 result = self.conversation_chain.invoke({"question": user_input})
+
+                # Log the top-k retrieved documents' content
+#                if "source_documents" in result:
+#                    logger.info("Retrieved source documents:")
+#                    for i, doc in enumerate(result["source_documents"], start=1):
+#                        logger.info(f"Document {i}: {doc.page_content}")
+
                 logger.info(f"Generated Responce: {result}.")
                 print("Chatbot:", result["answer"])
         except Exception as e:
