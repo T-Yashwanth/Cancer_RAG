@@ -1,14 +1,14 @@
 # Cancer RAG (Retrieval-Augmented Generation) System
 
-This project implements a Retrieval-Augmented Generation (RAG) system tailored for cancer-related information. It processes a PDF document (e.g., the National Cancer Plan), creates a vector store for efficient retrieval, and uses a conversational AI model to answer user queries based on the document's content.
+The Cancer RAG System is a robust Retrieval-Augmented Generation solution designed to process cancer-related documents, such as the National Cancer Plan, and to enable interactive, context-aware conversations. By extracting and indexing content from PDF files using FAISS and integrating with advanced language models, this system delivers precise and high-quality responses to user queries.
 
 ## Features
 
 - **PDF Document Processing**: Loads and preprocesses a PDF document, removing unwanted patterns like page numbers, headers, and footers.
-- **Text Chunking**: Splits the document into manageable chunks for efficient retrieval.
+- **Text Chunking**: Splits documents into manageable chunks to improve indexing accuracy and retrieval performance.
 - **Vector Store Creation**: Uses FAISS (Facebook AI Similarity Search) to create a vector store for fast and accurate document retrieval.
 - **Conversational AI**: Integrates with OpenAI's GPT-3.5-turbo model to provide conversational responses based on the retrieved documents.
-- **Logging**: Comprehensive logging for debugging and monitoring the system's operations.
+- **Comprehensive Logging**: Implements detailed logging for monitoring system operations and troubleshooting issues.
 
 ## How It Works
 
@@ -34,22 +34,28 @@ This project implements a Retrieval-Augmented Generation (RAG) system tailored f
 
 ## Setup Instructions
 
-1. **Create a Virtual Environment**:
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/T-Yashwanth/Cancer_RAG
+   cd cancer_rag
+   ```
+
+2. **Create a Virtual Environment**:
    ```bash
    python -m venv cancer_rag
    ```
 
-2. **Activate Virtual Environment in gitbash**:
+3 **Activate Virtual Environment in gitbash**:
    ```bash
    source cancer_rag/Scripts/activate
    ```
 
-3. **Install Dependencies**:
+4. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Create a Virtual Environment**:
+4. **Create a Virtual Environment to store api key**:
    - Create a `.env` file in the root directory and add your OpenAI API key
    ```text
    OPENAI_API_KEY=your_api_key_here
