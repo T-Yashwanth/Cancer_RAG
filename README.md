@@ -65,3 +65,11 @@ The Cancer RAG System is a robust Retrieval-Augmented Generation solution design
    ```bash
    python main.py
    ```
+
+-------------------
+1. if you are woking 1st time on this project in your local then do
+```bash
+python data_preprocessor.py
+```
+because it will create vectore store. 
+- If not uncomment step 1 in main.py

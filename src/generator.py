@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from src.config import LLM_MODEL
 from src import logger
@@ -65,6 +65,13 @@ class Chatbot:
             logger.info("Initializing Chatbot with provided retriever and LLM.")
             self.retriever = retriever
             self.llm = llm
+            """self.memory = ConversationSummaryBufferMemory(
+                llm=self.llm,  # LLM for summarization
+                max_token_limit=1000,  # Maximum token limit for the buffer
+                memory_key="chat_history",  # Key to store the conversation history
+                return_messages=True,  # Return messages as a list
+                output_key="answer"  # Key for the model's response 
+            )"""
             self.memory = ConversationBufferMemory(
                 memory_key="chat_history",
                 return_messages=True,
@@ -98,25 +105,23 @@ class Chatbot:
             logger.exception("Failed to create conversational retrieval chain.")
             raise
 
-    def chat(self) -> None:
+    def get_response(self, user_query: str) -> str:
         """
-        Start an interactive chatbot session.
-        Type 'exit' to end the conversation.
+        Process a user query through the conversational chain and return the generated answer.
+
+        Args:
+            user_query (str): The input query from the user.
+
+        Returns:
+            str: The generated answer.
         """
         try:
-            logger.info("Starting chatbot interaction loop.")
-            print("Chatbot is ready! Type 'exit' to quit.")
-            while True:
-                user_input = input("User: ")
-                if user_input.lower() == "exit":
-                    logger.info("Chatbot session terminated by user.")
-                    break
-                logger.info("Processing user query: %s", user_input)
-                result = self.conversation_chain.invoke({"question": user_input})
-                logger.info("response from chain includes history and retrived documents %s", result)
-                answer = result.get("answer")
-                logger.info("Generated response: %s", answer)
-                print("Chatbot:", answer)
+            logger.info("Processing user query: %s", user_query)
+            result = self.conversation_chain.invoke({"question": user_query})
+            logger.info("Response from chain includes history and retrieved documents: %s", result)
+            answer = result.get("answer")
+            logger.info("Generated response: %s", answer)
+            return answer
         except Exception:
-            logger.exception("An error occurred during the chatbot session.")
+            logger.exception("An error occurred during response generation.")
             raise

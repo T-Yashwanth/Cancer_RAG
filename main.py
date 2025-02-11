@@ -32,10 +32,19 @@ def main() -> None:
         llm_setup = LLMSetup()
         llm = llm_setup.get_llm()
 
-        # Step 4: Start the interactive chatbot session.
-        logger.info("Starting chatbot session.")
+        # Step 4: Instantiate the Chatbot.
+        logger.info("Initializing Chatbot.")
         chatbot = Chatbot(retriever=retriever_interface, llm=llm)
-        chatbot.chat()
+
+        # Interactive loop that handles user input/output.
+        print("Chatbot is ready! Type 'exit' to quit.")
+        while True:
+            user_input = input("User: ")
+            if user_input.lower() == "exit":
+                logger.info("Chatbot session terminated by user.")
+                break
+            answer = chatbot.get_response(user_input)
+            print("Chatbot:", answer)
 
     except Exception as e:
         logger.error(f"An error occurred in the main pipeline: {e}", exc_info=True)
