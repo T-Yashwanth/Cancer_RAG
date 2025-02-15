@@ -73,3 +73,7 @@ python data_preprocessor.py
 ```
 because it will create vectore store. 
 - If not uncomment step 1 in main.py
+
+```bash
+chainlit run chainlit_UI.py
+```

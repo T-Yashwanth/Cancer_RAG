@@ -1,7 +1,5 @@
 langchain
 langchain-community
-numpy
-pandas
 ipykernel
 transformers
 pypdf
@@ -12,4 +10,5 @@ openai
 pdfplumber
 langchain_huggingface
 langchain-openai
--e .
+chainlit
+langsmith

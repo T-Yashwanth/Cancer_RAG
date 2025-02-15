@@ -2,18 +2,15 @@ from src.data_processor import DataProcessor
 from src.retriever import VectorStoreRetriever
 from src.generator import LLMSetup, Chatbot
 from src.config import VECTORSTORE_SAVE_DIRECTORY
-from src import logger  # Import the logger
+import chainlit as cl
+from src import logger
 
-from langsmith import traceable
+from langsmith import traceable 
 
-@traceable
-def main() -> None:
+async def initialize_app():
     """
-    Execute the core pipeline:
-    1. (Optional) Reprocess data from the PDF.
-    2. Load the FAISS vector store.
-    3. Set up the language model.
-    4. Initiate the chatbot interactive session.
+    Initialize the application components.
+    This function is called once when the app starts.
     """
     try:
         logger.info("Starting the CancerRAG pipeline.")
@@ -23,7 +20,7 @@ def main() -> None:
         # logger.info("Processing PDF data to update vector store.")
         # processor = DataProcessor()
         # processor.process_data()
-        
+
         # Step 2: Load the pre-built vector store from disk.
         logger.info("Loading the vector store from disk.")
         vector_retriever = VectorStoreRetriever()
@@ -39,19 +36,40 @@ def main() -> None:
         logger.info("Initializing Chatbot.")
         chatbot = Chatbot(retriever=retriever_interface, llm=llm)
 
-        # Interactive loop that handles user input/output.
-        print("Chatbot is ready! Type 'exit' to quit.")
-        while True:
-            user_input = input("User: ")
-            if user_input.lower() == "exit":
-                logger.info("Chatbot session terminated by user.")
-                break
-            answer = chatbot.get_response(user_input)
-            print("Chatbot:", answer)
-
+        return chatbot
     except Exception:
-        logger.exception("An error occurred in the main pipeline:")
+        logger.exception("An error occurred during initialization:")
         raise
 
+@cl.on_chat_start
+async def start():
+    """
+    Callback function that is executed once when the chat starts.
+    This sends a welcome message to the user.
+    """
+    chatbot = await initialize_app()
+    cl.user_session.set("chatbot", chatbot)
+    await cl.Message(content="Chatbot is ready! Type your query to begin.").send()
+
+@cl.on_message
+async def main(message: cl.Message):
+    """
+    Callback function that handles incoming user messages.
+    The user's message is processed and an answer is displayed.
+    """
+    chatbot = cl.user_session.get("chatbot")
+    if chatbot is None:
+        await cl.Message(content="Error: Chatbot not initialized.").send()
+        return
+
+    try:
+        logger.info(f"Received message: {message.content}")
+        answer = chatbot.get_response(message.content)
+        await cl.Message(content=answer).send()
+    except Exception:
+        logger.exception("An error occurred in the main pipeline:")
+        await cl.Message(content="An error occurred. Please try again.").send()
+
 if __name__ == "__main__":
-    main()
+    logger.info("Application started")
+    cl.run()
