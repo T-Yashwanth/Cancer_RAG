@@ -5,7 +5,7 @@ from src.config import VECTORSTORE_SAVE_DIRECTORY
 import chainlit as cl
 from src import logger
 
-from langsmith import traceable 
+from langsmith import traceable
 
 async def initialize_app():
     """
@@ -51,6 +51,7 @@ async def start():
     cl.user_session.set("chatbot", chatbot)
     await cl.Message(content="Chatbot is ready! Type your query to begin.").send()
 
+@traceable(run_type="chain")
 @cl.on_message
 async def main(message: cl.Message):
     """
@@ -64,10 +65,18 @@ async def main(message: cl.Message):
 
     try:
         logger.info(f"Received message: {message.content}")
-        answer = chatbot.get_response(message.content)
-        await cl.Message(content=answer).send()
+
+        # Stream the response incrementally
+        response = await cl.Message(content="").send()
+        full_response = ""
+        for chunk in chatbot.get_response(message.content):
+            full_response += chunk
+            await response.stream_token(chunk)
+
+        await response.update()
+        logger.info("Generated response: %s", full_response)
     except Exception:
-        logger.exception("An error occurred in the main pipeline:")
+        logger.exception("An error occurred during response generation.")
         await cl.Message(content="An error occurred. Please try again.").send()
 
 if __name__ == "__main__":
