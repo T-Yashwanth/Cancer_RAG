@@ -4,14 +4,13 @@ import copy
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from langchain_pinecone import Pinecone
+from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.config import (PDF_PATH, EMBEDDING_MODEL_NAME, PINECONE_API_KEY, PINECONE_ENVIRONMENT, 
-                        PINECONE_INDEX_NAME, PINECONE_DIMENSIONS, PINECONE_DISTANCE_METRICS)
+from src.config import *
 from src import logger
 
-import pinecone
+from pinecone import Pinecone, ServerlessSpec
 
 class PDFDocumentHandler:
     """
@@ -40,7 +39,7 @@ class PDFDocumentHandler:
             self.documents = copy.deepcopy(self.original_documents)
             logger.info("Documents loaded successfully.")
         except Exception:
-            logger.exception(f"Failed to load documents.")
+            logger.exception("Failed to load documents.")
             raise
 
     def get_original_documents(self) -> list:
@@ -108,8 +107,8 @@ class DocumentChunker:
 
     def __init__(
         self,
-        chunk_size: int = 1000,
-        chunk_overlap: int = 200,
+        chunk_size: int = 500,
+        chunk_overlap: int = 100,
         separators: list | None = None
     ) -> None:
         """
@@ -146,7 +145,7 @@ class DocumentChunker:
         try:
             logger.info("Chunking documents...")
             chunks = self.splitter.split_documents(documents)
-            logger.info("Documents chunked successfully.")
+            logger.info(f"Documents chunked successfully. Got {len(chunks)} chunks")
             return chunks
         except Exception:
             logger.exception("Failed to chunk documents.")
@@ -168,19 +167,27 @@ class VectorStoreCreator:
         """
         self.model_name = model_name
         self.index_name = index_name
-        
-                # Check if the index exists, and create it if it doesn't
-        if self.index_name not in pinecone.list_indexes():
-            logger.info(f"Index '{self.index_name}' does not exist. Creating a new index.")
-            pinecone.create_index(self.index_name, dimension=PINECONE_DIMENSIONS, metric = PINECONE_DISTANCE_METRICS )
+        self.embedding_model = HuggingFaceEmbeddings(model_name=self.model_name)
+        self.pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+        self._ensure_index_exists()
+
+    def _ensure_index_exists(self) -> None:
+        """
+        Check if the Pinecone index exists. If not, create it.
+        """
+        if self.index_name not in self.pinecone_client.list_indexes().names():
+            logger.info(f"Index '{self.index_name}' not found. Creating new index...")
+            self.pinecone_client.create_index(
+                name=self.index_name,
+                dimension=PINECONE_DIMENSIONS,
+                metric=PINECONE_DISTANCE_METRICS,
+                spec=ServerlessSpec(cloud= PINECONE_CLOUD, region= PINECONE_REGION)
+            )
             logger.info(f"Index '{self.index_name}' created successfully.")
         else:
             logger.info(f"Index '{self.index_name}' already exists.")
 
-        self.embedding_model = HuggingFaceEmbeddings(model_name=self.model_name)
-        pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
-
-    def create_vector_store(self, chunks: list) -> Pinecone:
+    def create_vector_store(self, chunks: list) -> PineconeVectorStore:
         """
         Create a Pinecone vector store from the provided document chunks.
 
@@ -188,11 +195,14 @@ class VectorStoreCreator:
             chunks (list): A list of document chunks.
 
         Returns:
-            Pinecone: The created Pinecone vector store.
+            PineconeVectorStore: The created Pinecone vector store.
         """
         try:
-            logger.info("Creating vector store from chunks.")
-            vector_store = Pinecone.from_documents(chunks, self.embedding_model, index_name=self.index_name)
+            vector_store = PineconeVectorStore.from_documents(
+                chunks,
+                self.embedding_model,
+                index_name=self.index_name
+            )
             logger.info("Vector store created successfully.")
             return vector_store
         except Exception:

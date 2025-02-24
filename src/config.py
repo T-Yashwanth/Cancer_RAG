@@ -20,8 +20,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Pinecone configuration
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_ENVIRONMENT = "us-east-1"
-PINECONE_INDEX_NAME = "CancerRAG"
+PINECONE_CLOUD = "aws"
+PINECONE_REGION = "us-east-1"
+PINECONE_INDEX_NAME = "cancer-rag"
 PINECONE_SEARCH_TYPE = "similarity"  # Maximal Marginal Relevance
 #PINECONE_NAMESPACE = "default"  # Optional: Use if you want to namespace your vectors
 PINECONE_DIMENSIONS = 384  # Dimensions for the embedding model (all-MiniLM-L6-v2)
