@@ -1,13 +1,17 @@
 import re
 import copy
+
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from langchain_community.vectorstores import FAISS
+from langchain_pinecone import Pinecone
 from langchain_huggingface import HuggingFaceEmbeddings
-from src.config import PDF_PATH, EMBEDDING_MODEL_NAME, VECTORSTORE_SAVE_DIRECTORY
+
+from src.config import (PDF_PATH, EMBEDDING_MODEL_NAME, PINECONE_API_KEY, PINECONE_ENVIRONMENT, 
+                        PINECONE_INDEX_NAME, PINECONE_DIMENSIONS, PINECONE_DISTANCE_METRICS)
 from src import logger
 
+import pinecone
 
 class PDFDocumentHandler:
     """
@@ -151,52 +155,48 @@ class DocumentChunker:
 
 class VectorStoreCreator:
     """
-    Creates and manages a FAISS vector store from document chunks.
+    Creates and manages a Pinecone vector store from document chunks.
     """
 
-    def __init__(self, model_name: str = EMBEDDING_MODEL_NAME) -> None:
+    def __init__(self, model_name: str = EMBEDDING_MODEL_NAME, index_name: str = PINECONE_INDEX_NAME) -> None:
         """
-        Initialize with a specific HuggingFace embedding model.
+        Initialize with a specific HuggingFace embedding model and Pinecone index name.
 
         Args:
             model_name (str): The name of the embedding model.
+            index_name (str): The name of the Pinecone index.
         """
         self.model_name = model_name
-        self.embedding_model = HuggingFaceEmbeddings(model_name=self.model_name)
+        self.index_name = index_name
+        
+                # Check if the index exists, and create it if it doesn't
+        if self.index_name not in pinecone.list_indexes():
+            logger.info(f"Index '{self.index_name}' does not exist. Creating a new index.")
+            pinecone.create_index(self.index_name, dimension=PINECONE_DIMENSIONS, metric = PINECONE_DISTANCE_METRICS )
+            logger.info(f"Index '{self.index_name}' created successfully.")
+        else:
+            logger.info(f"Index '{self.index_name}' already exists.")
 
-    def create_vector_store(self, chunks: list) -> FAISS:
+        self.embedding_model = HuggingFaceEmbeddings(model_name=self.model_name)
+        pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
+
+    def create_vector_store(self, chunks: list) -> Pinecone:
         """
-        Create a FAISS vector store from the provided document chunks.
+        Create a Pinecone vector store from the provided document chunks.
 
         Args:
             chunks (list): A list of document chunks.
 
         Returns:
-            FAISS: The created FAISS vector store.
+            Pinecone: The created Pinecone vector store.
         """
         try:
             logger.info("Creating vector store from chunks.")
-            vector_store = FAISS.from_documents(chunks, self.embedding_model)
+            vector_store = Pinecone.from_documents(chunks, self.embedding_model, index_name=self.index_name)
             logger.info("Vector store created successfully.")
             return vector_store
         except Exception:
             logger.exception("Failed to create vector store.")
-            raise
-
-    def save_vector_store(self, vector_store: FAISS, save_directory: str = VECTORSTORE_SAVE_DIRECTORY) -> None:
-        """
-        Save the FAISS vector store to a local directory.
-
-        Args:
-            vector_store (FAISS): The vector store instance.
-            save_directory (str): Directory path to store the vector store.
-        """
-        try:
-            logger.info("Saving vector store to directory: %s", save_directory)
-            vector_store.save_local(save_directory)
-            logger.info("Vector store saved successfully.")
-        except Exception:
-            logger.exception("Failed to save vector store.")
             raise
 
 
@@ -221,7 +221,7 @@ class DataProcessor:
         1. Load the PDF.
         2. Preprocess the text.
         3. Chunk the documents.
-        4. Create and save the FAISS vector store.
+        4. Create and save the Pinecone vector store.
         """
         try:
             logger.info("Starting data processing pipeline.")
@@ -239,7 +239,6 @@ class DataProcessor:
 
             # Create and save the vector store.
             vector_store = self.vector_store_creator.create_vector_store(chunks)
-            self.vector_store_creator.save_vector_store(vector_store)
 
             logger.info("Data processing completed successfully. Vector store is ready.")
         except Exception:

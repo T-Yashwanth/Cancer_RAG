@@ -12,3 +12,5 @@ langchain_huggingface
 langchain-openai
 chainlit
 langsmith
+pinecone
+langchain_pinecone
