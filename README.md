@@ -45,7 +45,7 @@ The Cancer RAG System is a robust Retrieval-Augmented Generation solution design
    python -m venv cancer_rag
    ```
 
-3 **Activate Virtual Environment in gitbash**:
+3. **Activate Virtual Environment in gitbash**:
    ```bash
    source cancer_rag/Scripts/activate
    ```
@@ -55,13 +55,13 @@ The Cancer RAG System is a robust Retrieval-Augmented Generation solution design
    pip install -r requirements.txt
    ```
 
-4. **Create a Virtual Environment to store api key**:
+5. **Create a Virtual Environment to store api key**:
    - Create a `.env` file in the root directory and add your OpenAI API key
    ```text
    OPENAI_API_KEY=your_api_key_here
    ```
 
-5. **Run the Application**:
+6. **Run the Application**:
    ```bash
    python main.py
    ```
