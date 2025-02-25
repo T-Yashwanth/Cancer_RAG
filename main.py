@@ -27,7 +27,7 @@ def main() -> None:
         # Step 2: Load the pre-built vector store from disk.
         logger.info("Loading the vector store from disk.")
         vector_retriever = VectorStoreRetriever()
-        vector_retriever.load_vector_store(VECTORSTORE_SAVE_DIRECTORY)
+        vector_retriever.load_vector_store()
         retriever_interface = vector_retriever.retrieve_documents()
 
         # Step 3: Initialize the language model.

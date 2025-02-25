@@ -1,11 +1,30 @@
 from src.data_processor import DataProcessor
 from src.retriever import VectorStoreRetriever
 from src.generator import LLMSetup, Chatbot
-from src.config import VECTORSTORE_SAVE_DIRECTORY
+
+from langsmith import traceable
+
 import chainlit as cl
 from src import logger
 
-from langsmith import traceable
+import logging
+import sys
+
+# Disable all root handlers to prevent logs from going to console
+logging.getLogger().handlers = []
+
+# Add this at the beginning to redirect Chainlit's logs to file
+import chainlit
+
+# Disable Chainlit's default logger handlers
+for handler in chainlit.logger.handlers:
+    chainlit.logger.removeHandler(handler)
+
+# Make sure our project logger only has file handlers
+for handler in logger.handlers:
+    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
+        logger.removeHandler(handler)
+
 
 async def initialize_app():
     """
@@ -24,7 +43,7 @@ async def initialize_app():
         # Step 2: Load the pre-built vector store from disk.
         logger.info("Loading the vector store from disk.")
         vector_retriever = VectorStoreRetriever()
-        vector_retriever.load_vector_store(VECTORSTORE_SAVE_DIRECTORY)
+        vector_retriever.load_vector_store()
         retriever_interface = vector_retriever.retrieve_documents()
 
         # Step 3: Initialize the language model.

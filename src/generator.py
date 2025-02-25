@@ -3,11 +3,9 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from src.config import LLM_MODEL
+from src.config import LLM_MODEL, OPENAI_API_KEY
 from src import logger
 
-# Load environment variables from .env.
-load_dotenv()
 
 
 class LLMSetup:
@@ -30,7 +28,7 @@ class LLMSetup:
             self.llm = ChatOpenAI(
                 temperature=self.temperature,
                 model_name=self.model_name,
-                openai_api_key=os.getenv("OPENAI_API_KEY")
+                openai_api_key= OPENAI_API_KEY
             )
             logger.info("LLM initialized successfully.")
         except Exception:
