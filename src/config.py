@@ -28,3 +28,5 @@ PINECONE_SEARCH_TYPE = "similarity"  # Maximal Marginal Relevance
 PINECONE_DIMENSIONS = 384  # Dimensions for the embedding model (all-MiniLM-L6-v2)
 PINECONE_SEARCH_TYPE = "similarity"  # Use cosine similarity
 PINECONE_DISTANCE_METRICS = "cosine"
+
+Top_K = 4

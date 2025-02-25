@@ -1,7 +1,6 @@
 from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
-from src.config import (PINECONE_API_KEY, PINECONE_INDEX_NAME, PINECONE_SEARCH_TYPE, 
-                        EMBEDDING_MODEL_NAME, PINECONE_DISTANCE_METRICS)
+from src.config import *
 from src import logger
 from pinecone import Pinecone
 
@@ -46,7 +45,7 @@ class VectorStoreRetriever:
             retriever_interface = self.vector_store.as_retriever(
                 search_type=PINECONE_SEARCH_TYPE,
                 search_kwargs={
-                    "k": 2,  # Number of documents to retrieve.
+                    "k": Top_K,  # Number of documents to retrieve.
                     #"distance_metric": PINECONE_DISTANCE_METRICS  # Specify cosine similarity
                     # "namespace": PINECONE_NAMESPACE  # Optional: Use if you want to namespace your vectors
                 },
