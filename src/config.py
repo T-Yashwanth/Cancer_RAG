@@ -15,7 +15,7 @@ VECTORSTORE_SAVE_DIRECTORY = os.path.join(BASE_DIR, "data")
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # OpenAI
-LLM_MODEL = "gpt-3.5-turbo"
+LLM_MODEL =  "gpt-4.1-mini" #"gpt-3.5-turbo"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Pinecone configuration
