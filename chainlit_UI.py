@@ -1,30 +1,11 @@
+# chainlit_UI.py
 from src.data_processor import DataProcessor
 from src.retriever import VectorStoreRetriever
 from src.generator import LLMSetup, Chatbot
-
 from langsmith import traceable
 
 import chainlit as cl
 from src import logger
-
-import logging
-import sys
-
-# Disable all root handlers to prevent logs from going to console
-logging.getLogger().handlers = []
-
-# Add this at the beginning to redirect Chainlit's logs to file
-import chainlit
-
-# Disable Chainlit's default logger handlers
-for handler in chainlit.logger.handlers:
-    chainlit.logger.removeHandler(handler)
-
-# Make sure our project logger only has file handlers
-for handler in logger.handlers:
-    if isinstance(handler, logging.StreamHandler) and handler.stream == sys.stdout:
-        logger.removeHandler(handler)
-
 
 async def initialize_app():
     """

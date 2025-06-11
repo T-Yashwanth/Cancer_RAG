@@ -1,28 +1,39 @@
+# __init__.py
 import os
 import logging
 from datetime import datetime
 
-# Define a standard logging format.
-LOG_FORMAT = "[%(asctime)s - %(levelname)s - %(module)s - %(message)s]"
-
-# Set up the logs directory.
+# Logging format
+LOG_FORMAT = "[%(asctime)s - %(levelname)s - %(name)s - %(message)s]"
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Create a unique log file name based on the current timestamp.
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 log_filename = f"running_log_{timestamp}.log"
 log_filepath = os.path.join(LOG_DIR, log_filename)
-# Configure logging to file.
-logging.basicConfig(
-    level=logging.INFO,
-    format=LOG_FORMAT,
-    handlers=[
-        logging.FileHandler(log_filepath),
-        # Uncomment the next line to also log to the console
-        # logging.StreamHandler(sys.stdout)
-    ]
-)
 
-# Create a project logger.
+# Create handlers
+file_handler = logging.FileHandler(log_filepath)
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+# Optional: also log to console (uncomment if needed)
+# console_handler = logging.StreamHandler()
+# console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+
+# Get root logger and clear any default handlers
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+root_logger.addHandler(file_handler)
+# Optional: add console logging
+# root_logger.addHandler(console_handler)
+
+# Optionally, set a specific logger for your project
 logger = logging.getLogger("CancerRAG")
+# No need to add handlers, will inherit from root_logger
+
+# Optional: also ensure Chainlit logger inherits handlers
+import logging
+chainlit_logger = logging.getLogger("chainlit")
+chainlit_logger.propagate = True
